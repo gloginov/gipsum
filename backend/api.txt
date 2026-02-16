@@ -1,0 +1,60 @@
+
+| URL                                       | Описание         |
+| ----------------------------------------- | ---------------- |
+| `https://api-gipsum.docker/admin`         | Django Admin     |
+| `https://api-gipsum.docker/api/products/` | Список продуктов |
+| `https://api-gipsum.docker/api/cart/`     | Корзина          |
+| `https://api-gipsum.docker/api/orders/`   | Заказы           |
+| `https://api-gipsum.docker/api/settings/` | Настройки сайта  |
+
+
+| Endpoint                                    | Method | Описание                        |
+| ------------------------------------------- | ------ | ------------------------------- |
+| `/api/products/`                            | GET    | Список товаров                  |
+| `/api/products/{slug}/`                     | GET    | Товар по slug                   |
+| `/api/products/{id}/`                       | GET    | Товар по ID (число)             |
+| `/api/products/featured/`                   | GET    | Рекомендуемые товары            |
+| `/api/orders/`                              | POST   | Создать заказ + отправить email |
+| `/api/orders/{order_number}/resend_email/`  | POST   | Повторно отправить email        |
+| `/api/orders/{order_number}/update_status/` | PATCH  | Обновить статус + уведомление   |
+
+
+GET /api/settings/ - все настройки
+GET /api/settings/?keys=site_name,home_hero_title,footer_text - Получить конкретные настройки через query параметр
+
+
+GET /api/settings/?key=site_name - Получить одну настройку
+GET /api/settings/by-key/?key=site_name
+
+GET /api/settings/group/?prefix=home_
+
+GET /api/settings/homepage/?extra=site_name,contact_email - Главная страница с дополнительными настройками
+
+| Endpoint                                        | Описание                               |
+| ----------------------------------------------- | -------------------------------------- |
+| `GET /api/products/categories/`                 | Дерево категорий (только родительские) |
+| `GET /api/products/categories/tree/`            | Полное дерево со всеми уровнями        |
+| `GET /api/products/categories/flat/`            | Плоский список всех категорий          |
+| `GET /api/products/categories/{slug}/products/` | Товары категории с фильтрами           |
+| `GET /api/products/categories/by_id/?id=1`      | Категория по ID                        |
+| `GET /api/products/?category=slug`              | Фильтр по категории (slug)             |
+| `GET /api/products/?category_id=1`              | Фильтр по категории (ID)               |
+| `GET /api/products/new_arrivals/`               | Новинки                                |
+| `GET /api/products/bestsellers/`                | Хиты продаж                            |
+| `GET /api/products/by_category/`                | Товары сгруппированные по категориям   |
+| `GET /api/products/{slug}/related/`             | Похожие товары                         |
+
+
+
+| Endpoint                         | Доступ                       |
+| -------------------------------- | ---------------------------- |
+| `GET /api/products/`             | Все                          |
+| `GET /api/products/{id}/`        | Все                          |
+| `POST/PUT/DELETE /api/products/` | Только админ                 |
+| `GET /api/products/categories/`  | Все                          |
+| `GET /api/cart/`                 | Все (по сессии)              |
+| `POST /api/cart/add/`            | Все                          |
+| `GET /api/orders/`               | Только авторизованные (свои) |
+| `POST /api/orders/`              | Только авторизованные        |
+| `GET /api/settings/`             | Все                          |
+| `/admin/`                        | Только админ                 |

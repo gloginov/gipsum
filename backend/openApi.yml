@@ -1,0 +1,897 @@
+openapi: 3.0.3
+info:
+  title: Gipsum E-commerce API
+  description: |
+    REST API для интернет-магазина Gipsum.
+    Базовый URL: `https://api-gipsum.docker/api/`
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@gipsum.shop
+
+servers:
+  - url: https://api-gipsum.docker/api
+    description: Production server
+  - url: http://localhost:5000/api
+    description: Local development
+
+tags:
+  - name: Products
+    description: Каталог товаров и категории
+  - name: Cart
+    description: Корзина покупок (session-based)
+  - name: Orders
+    description: Оформление и управление заказами
+  - name: Settings
+    description: Динамические настройки сайта
+  - name: Admin
+    description: Административный интерфейс
+
+paths:
+  # ==================== PRODUCTS ====================
+  /products/:
+    get:
+      tags: [Products]
+      summary: Список товаров
+      description: Получить список всех доступных товаров с пагинацией
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Номер страницы
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Фильтр по slug категории
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Поиск по названию и описанию
+        - name: ordering
+          in: query
+          schema:
+            type: string
+            enum: [price, -price, created_at, -created_at, name, -name]
+          description: Сортировка (- для убывания)
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductList'
+
+  /products/{id_or_slug}/:
+    get:
+      tags: [Products]
+      summary: Детали товара
+      description: Получить детальную информацию о товаре по ID или slug
+      parameters:
+        - name: id_or_slug
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID (число) или slug товара
+          examples:
+            by_id:
+              value: "1"
+              summary: По ID
+            by_slug:
+              value: "iphone-15-pro"
+              summary: По slug
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '404':
+          description: Товар не найден
+
+  /products/featured/:
+    get:
+      tags: [Products]
+      summary: Рекомендуемые товары
+      description: Получить до 10 рекомендуемых товаров
+      responses:
+        '200':
+          description: Список рекомендуемых товаров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductList'
+
+  /products/categories/:
+    get:
+      tags: [Products]
+      summary: Список категорий
+      description: Получить дерево категорий (только родительские)
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /products/categories/{slug}/:
+    get:
+      tags: [Products]
+      summary: Детали категории
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о категории
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+
+  /products/categories/{slug}/products/:
+    get:
+      tags: [Products]
+      summary: Товары категории
+      description: Получить все товары из категории и подкатегорий
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список товаров категории
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductList'
+
+  # ==================== CART ====================
+  /cart/:
+    get:
+      tags: [Cart]
+      summary: Просмотр корзины
+      description: Получить текущее содержимое корзины из сессии
+      responses:
+        '200':
+          description: Содержимое корзины
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+
+  /cart/add/:
+    post:
+      tags: [Cart]
+      summary: Добавить в корзину
+      description: Добавить товар в корзину или обновить количество
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, quantity]
+              properties:
+                product_id:
+                  type: integer
+                  description: ID товара
+                  example: 1
+                quantity:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+                  description: Количество
+                  example: 2
+                override:
+                  type: boolean
+                  default: false
+                  description: Заменить текущее количество (true) или добавить (false)
+      responses:
+        '200':
+          description: Товар добавлен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Product added to cart"
+                  cart_total:
+                    type: string
+                    example: "199.98"
+                  items_count:
+                    type: integer
+                    example: 2
+        '400':
+          description: Ошибка (нет товара на складе или товар недоступен)
+
+  /cart/remove/:
+    post:
+      tags: [Cart]
+      summary: Удалить из корзины
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id]
+              properties:
+                product_id:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: Товар удален
+
+  /cart/clear/:
+    post:
+      tags: [Cart]
+      summary: Очистить корзину
+      responses:
+        '200':
+          description: Корзина очищена
+
+  # ==================== ORDERS ====================
+  /orders/:
+    get:
+      tags: [Orders]
+      summary: Список заказов
+      description: Получить список заказов (последние 10 для неавторизованных)
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderList'
+
+    post:
+      tags: [Orders]
+      summary: Создать заказ
+      description: |
+        Оформить заказ из содержимого корзины.
+        После создания корзина очищается, отправляется email клиенту и уведомление админу.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OrderDetail'
+                  - type: object
+                    properties:
+                      email_sent:
+                        type: boolean
+                        description: Было ли отправлено письмо подтверждения
+        '400':
+          description: Корзина пуста или ошибка валидации
+
+  /orders/{order_number}/:
+    get:
+      tags: [Orders]
+      summary: Детали заказа
+      parameters:
+        - name: order_number
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "ORD-A1B2C3D4"
+      responses:
+        '200':
+          description: Информация о заказе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '404':
+          description: Заказ не найден
+
+  /orders/{order_number}/update_status/:
+    patch:
+      tags: [Orders]
+      summary: Обновить статус заказа
+      description: Изменить статус заказа и отправить уведомление клиенту
+      parameters:
+        - name: order_number
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, processing, shipped, delivered, cancelled]
+                  example: "shipped"
+                admin_note:
+                  type: string
+                  example: "Отправлено курьерской службой СДЭК"
+      responses:
+        '200':
+          description: Статус обновлен
+
+  /orders/{order_number}/resend_email/:
+    post:
+      tags: [Orders]
+      summary: Повторно отправить письмо
+      description: Повторная отправка подтверждения заказа (если ранее не отправлялось)
+      parameters:
+        - name: order_number
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Письмо отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email sent successfully"
+        '400':
+          description: Не удалось отправить (уже отправлено или ошибка)
+
+  /orders/my_orders/:
+    get:
+      tags: [Orders]
+      summary: Мои заказы
+      description: Получить заказы текущего пользователя (по сессии)
+      responses:
+        '200':
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderList'
+
+  # ==================== SETTINGS ====================
+  /settings/:
+    get:
+      tags: [Settings]
+      summary: Получить настройки
+      description: |
+        Получить настройки сайта. Можно запросить все или конкретные ключи.
+        
+        **Варианты использования:**
+        - `GET /settings/` - все настройки (полные объекты)
+        - `GET /settings/?keys=site_name,home_hero_title` - только указанные (key-value)
+        - `GET /settings/?key=site_name` - одна настройка
+      parameters:
+        - name: keys
+          in: query
+          schema:
+            type: string
+          description: Ключи через запятую (site_name,home_hero_title,footer_text)
+          example: "site_name,home_hero_title"
+        - name: key
+          in: query
+          schema:
+            type: string
+          description: Один ключ (альтернатива keys)
+          example: "site_name"
+      responses:
+        '200':
+          description: |
+            Если указаны keys/key - возвращает объект {key: value}.
+            Иначе массив полных объектов настроек.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    additionalProperties:
+                      type: string
+                    example:
+                      site_name: "Gipsum Shop"
+                      home_hero_title: "Добро пожаловать"
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/Setting'
+
+  /settings/bulk/:
+    post:
+      tags: [Settings]
+      summary: Получить несколько настроек (POST)
+      description: Запросить конкретные настройки по массиву ключей
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    keys:
+                      type: array
+                      items:
+                        type: string
+                      description: Массив ключей настроек
+                      example: ["site_name", "home_hero_title", "footer_text"]
+                - type: object
+                  properties:
+                    key:
+                      type: string
+                      description: Один ключ (для удобства)
+                      example: "site_name"
+            examples:
+              multiple:
+                summary: Несколько настроек
+                value:
+                  keys: ["site_name", "home_hero_title", "contact_phone"]
+              single:
+                summary: Одна настройка
+                value:
+                  key: "site_name"
+      responses:
+        '200':
+          description: Найденные и не найденные настройки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+                    example:
+                      site_name: "Gipsum Shop"
+                      home_hero_title: "Добро пожаловать"
+                  found:
+                    type: array
+                    items:
+                      type: string
+                    example: ["site_name", "home_hero_title"]
+                  not_found:
+                    type: array
+                    items:
+                      type: string
+                    nullable: true
+                    example: ["contact_phone"]
+
+  /settings/by-key/:
+    get:
+      tags: [Settings]
+      summary: Получить настройку по ключу (GET)
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "site_name"
+      responses:
+        '200':
+          description: Настройка найдена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  value:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+        '404':
+          description: Настройка не найдена
+
+    post:
+      tags: [Settings]
+      summary: Получить настройку по ключу (POST)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key]
+              properties:
+                key:
+                  type: string
+                  example: "site_name"
+      responses:
+        '200':
+          description: Настройка найдена
+
+  /settings/group/:
+    get:
+      tags: [Settings]
+      summary: Настройки по префиксу
+      description: Получить все настройки, ключи которых начинаются с указанного префикса
+      parameters:
+        - name: prefix
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Префикс ключа (например, 'home_' для home_hero_title)
+          example: "home_"
+      responses:
+        '200':
+          description: Группа настроек
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prefix:
+                    type: string
+                  count:
+                    type: integer
+                  settings:
+                    type: object
+                    additionalProperties: true
+
+  /settings/homepage/:
+    get:
+      tags: [Settings]
+      summary: Настройки главной страницы
+      description: |
+        Получить все настройки с префиксом 'home_' и дополнительные при необходимости
+      parameters:
+        - name: extra
+          in: query
+          schema:
+            type: string
+          description: Дополнительные ключи через запятую
+          example: "site_name,contact_email"
+      responses:
+        '200':
+          description: Настройки для главной страницы
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  home_settings:
+                    type: object
+                    additionalProperties: true
+                  extra_settings:
+                    type: object
+                    additionalProperties: true
+                    nullable: true
+
+  /settings/{key}/:
+    get:
+      tags: [Settings]
+      summary: Получить настройку по ключу (детально)
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Полная информация о настройке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Setting'
+
+  # ==================== ADMIN ====================
+  /admin/:
+    get:
+      tags: [Admin]
+      summary: Django Admin
+      description: Административный интерфейс Django
+      responses:
+        '200':
+          description: HTML страница админки
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  schemas:
+    # Products
+    ProductList:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: "iPhone 15 Pro"
+        slug:
+          type: string
+          example: "iphone-15-pro"
+        price:
+          type: string
+          example: "999.99"
+        main_image:
+          type: object
+          nullable: true
+          properties:
+            url:
+              type: string
+            alt:
+              type: string
+        category_name:
+          type: string
+          nullable: true
+        is_available:
+          type: boolean
+        is_featured:
+          type: boolean
+
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductList'
+        - type: object
+          properties:
+            description:
+              type: string
+              example: "Последний iPhone с процессором A17 Pro"
+            stock:
+              type: integer
+              example: 15
+            images:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  image:
+                    type: string
+                  is_main:
+                    type: boolean
+                  alt_text:
+                    type: string
+            category:
+              $ref: '#/components/schemas/Category'
+            created_at:
+              type: string
+              format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: "Смартфоны"
+        slug:
+          type: string
+          example: "smartphones"
+        description:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+
+    # Cart
+    CartItem:
+      type: object
+      properties:
+        product_id:
+          type: integer
+        product_name:
+          type: string
+        product_slug:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: string
+        total_price:
+          type: string
+        main_image:
+          type: string
+          nullable: true
+
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        total_price:
+          type: string
+          example: "1999.98"
+        items_count:
+          type: integer
+          example: 3
+
+    # Orders
+    OrderCreate:
+      type: object
+      required: [first_name, last_name, email, phone, address, city, postal_code]
+      properties:
+        first_name:
+          type: string
+          example: "Иван"
+        last_name:
+          type: string
+          example: "Иванов"
+        email:
+          type: string
+          format: email
+          example: "ivan@example.com"
+        phone:
+          type: string
+          example: "+79991234567"
+        address:
+          type: string
+          example: "ул. Ленина, д. 1, кв. 10"
+        city:
+          type: string
+          example: "Москва"
+        postal_code:
+          type: string
+          example: "123456"
+        country:
+          type: string
+          default: "Russia"
+          example: "Russia"
+        payment_method:
+          type: string
+          default: "card"
+          enum: [card, cash, online]
+        customer_note:
+          type: string
+          example: "Позвоните за час до доставки"
+
+    OrderList:
+      type: object
+      properties:
+        id:
+          type: integer
+        order_number:
+          type: string
+          example: "ORD-A1B2C3D4"
+        status:
+          type: string
+          enum: [pending, processing, shipped, delivered, cancelled]
+        total:
+          type: string
+        paid:
+          type: boolean
+        email_sent:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    OrderItemDetail:
+      type: object
+      properties:
+        product_name:
+          type: string
+        product_price:
+          type: string
+        quantity:
+          type: integer
+        total:
+          type: string
+
+    OrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/OrderList'
+        - type: object
+          properties:
+            first_name:
+              type: string
+            last_name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            address:
+              type: string
+            city:
+              type: string
+            postal_code:
+              type: string
+            country:
+              type: string
+            payment_method:
+              type: string
+            subtotal:
+              type: string
+            shipping_cost:
+              type: string
+            tax:
+              type: string
+            customer_note:
+              type: string
+            admin_note:
+              type: string
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItemDetail'
+            paid_at:
+              type: string
+              format: date-time
+              nullable: true
+            email_sent_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    # Settings
+    Setting:
+      type: object
+      properties:
+        key:
+          type: string
+          example: "site_name"
+        name:
+          type: string
+          example: "Название сайта"
+        description:
+          type: string
+        type:
+          type: string
+          enum: [text, textarea, image, boolean, number]
+        value:
+          type: string
+        image:
+          type: string
+          nullable: true
+        display_value:
+          type: string

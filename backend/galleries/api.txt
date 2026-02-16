@@ -1,0 +1,29 @@
+| Endpoint                                         | Описание                    |
+| ------------------------------------------------ | --------------------------- |
+| `GET /api/galleries/`                            | Список всех галерей         |
+| `GET /api/galleries/{slug}/`                     | Детали галереи              |
+| `GET /api/galleries/{slug}/render/`              | Галерея готовая для рендера |
+| `GET /api/galleries/by_type/?type=slider`        | Фильтр по типу              |
+| `GET /api/galleries/sliders/`                    | Все слайдеры                |
+| `GET /api/galleries/grids/`                      | Все сетки                   |
+| `GET /api/galleries/images/?gallery=main-slider` | Изображения галереи         |
+
+
+// Получить слайдер для главной страницы
+fetch('https://api-gipsum.docker/api/galleries/main-slider/render/')
+  .then(r => r.json())
+  .then(gallery => {
+    // gallery.display_type = 'slider'
+    // gallery.autoplay = true
+    // gallery.images = [...]
+    renderSlider(gallery);
+  });
+
+// Получить сетку для страницы "Портфолио"
+fetch('https://api-gipsum.docker/api/galleries/portfolio/render/')
+  .then(r => r.json())
+  .then(gallery => {
+    // gallery.display_type = 'masonry'
+    // gallery.columns = 3
+    renderGrid(gallery);
+  });

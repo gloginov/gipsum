@@ -1,0 +1,39 @@
+| Метод | Endpoint                     | Описание                                 | Доступ |
+| ----- | ---------------------------- | ---------------------------------------- | ------ |
+| POST  | `/api/feedback/`             | Отправить форму                          | Все    |
+| GET   | `/api/feedback/config/`      | Конфигурация формы (URL политики и т.д.) | Все    |
+| GET   | `/api/feedback/`             | Список обращений                         | Админ  |
+| GET   | `/api/feedback/{id}/`        | Детали обращения                         | Админ  |
+| PATCH | `/api/feedback/{id}/`        | Обновить статус                          | Админ  |
+| POST  | `/api/feedback/{id}/answer/` | Ответить на обращение                    | Админ  |
+| GET   | `/api/feedback/stats/`       | Статистика                               | Админ  |
+
+
+// Получить конфигурацию (URL политики)
+fetch('https://api-gipsum.docker/api/feedback/config/')
+  .then(r => r.json())
+  .then(config => {
+    console.log(config.privacy_policy_url); // URL для ссылки
+  });
+
+// Отправить форму
+const formData = new FormData();
+formData.append('name', 'Иван Иванов');
+formData.append('email', 'ivan@example.com');
+formData.append('phone', '+79991234567');
+formData.append('message_type', 'general');
+formData.append('subject', 'Вопрос о доставке');
+formData.append('message', 'Как долго идет доставка?');
+formData.append('privacy_policy_accepted', 'true');
+formData.append('attachment', fileInput.files[0]); // опционально
+
+fetch('https://api-gipsum.docker/api/feedback/', {
+  method: 'POST',
+  body: formData
+})
+.then(r => r.json())
+.then(data => {
+  if (data.success) {
+    alert('Сообщение отправлено! ID: ' + data.feedback_id);
+  }
+});

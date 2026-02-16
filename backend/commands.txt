@@ -1,0 +1,10 @@
+
+python manage.py makemigrations [app_name] // создать миграции
+python manage.py migrate // применить миграции
+python manage.py createsuperuser //создать суперпользователя
+pip freeze > requirements.txt // сохранить список зависимостей и версии пакетов
+pip install -r requirements.txt // установить пакеты
+
+python manage.py makemigrations admin auth cart contenttypes feedback galleries orders products sessions site_settings &&
+python manage.py migrate
+
