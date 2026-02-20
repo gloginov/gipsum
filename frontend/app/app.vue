@@ -24,10 +24,13 @@ useSeoMeta({
   // twitterCard: 'summary_large_image'
 })
 
-const cart = useCartStore()
+// const cart = useCartStore()
+const { init } = useCartPersistence()
 
 onMounted(() => {
-  cart.init()
+  // cart.init()
+  // cart.fetchCart() 
+  init()
 })
 </script>
 

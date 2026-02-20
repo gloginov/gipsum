@@ -207,6 +207,7 @@ import { useRoute } from 'vue-router'
 import Slider from '~/components/Slider/Slider.vue'
 import { useCartStore } from '~/stores/cart'
 import type { Product } from '~/types/product'
+import getCurrentApiUrl from '~/helpers/getCurrentApiUrl'
 
 const route = useRoute()
 const cartStore = useCartStore()
@@ -216,7 +217,9 @@ const quantity = ref(1)
 const showSuccessMessage = ref(false)
 
 // Загрузка данных товара
-const { data: product, pending, error } = await useFetch<Product>(`/api/products/${route.params.id}/`)
+const { data: product, pending, error } = await useFetch<Product>(`/api/products/${route.params.id}/`, {
+  baseURL: getCurrentApiUrl(),
+})
 
 // SEO метаданные
 useHead(() => ({
@@ -258,7 +261,7 @@ useHead(() => ({
 }))
 
 // JSON-LD разметка для SEO
-useJsonLd(() => {
+useJsonld(() => {
   if (!product.value) return null
 
   return {

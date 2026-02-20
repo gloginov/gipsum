@@ -1,5 +1,7 @@
+import { get } from '@nuxt/ui/runtime/utils/index.js'
 import { defineStore } from 'pinia'
 import type { Cart, CartItem, CartAddPayload, CartUpdatePayload, CartRemovePayload } from '~/types/cart'
+import getCurrentApiUrl from '~/helpers/getCurrentApiUrl'
 
 interface CartState {
   items: CartItem[]
@@ -62,6 +64,7 @@ export const useCartStore = defineStore('cart', {
       try {
         const { data, error } = await useFetch<Cart>('/api/cart/', {
           credentials: 'include',
+          baseURL: getCurrentApiUrl()
         })
         
         if (error.value) {
@@ -94,6 +97,7 @@ export const useCartStore = defineStore('cart', {
           method: 'POST',
           body: payload,
           credentials: 'include',
+          baseURL: getCurrentApiUrl()
         })
         
         if (error.value) {
@@ -128,6 +132,7 @@ export const useCartStore = defineStore('cart', {
           method: 'POST',
           body: payload,
           credentials: 'include',
+          baseURL: getCurrentApiUrl()
         })
         
         if (error.value) {
@@ -162,6 +167,7 @@ export const useCartStore = defineStore('cart', {
           method: 'POST',
           body: { product_id: productId },
           credentials: 'include',
+          baseURL: getCurrentApiUrl()
         })
         
         if (error.value) {
@@ -195,6 +201,7 @@ export const useCartStore = defineStore('cart', {
         }>('/api/cart/clear/', {
           method: 'POST',
           credentials: 'include',
+          baseURL: getCurrentApiUrl()
         })
         
         if (error.value) {
@@ -235,8 +242,8 @@ export const useCartStore = defineStore('cart', {
   },
 
   // Сохранение в localStorage (опционально)
-  persist: {
-    storage: piniaPluginPersistedstate.localStorage(),
-    paths: ['items', 'total', 'count'], // Что сохранять
-  },
+  // persist: {
+  //   storage: piniaPluginPersistedstate.localStorage(),
+  //   paths: ['items', 'total', 'count'], // Что сохранять
+  // },
 })

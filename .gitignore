@@ -26,3 +26,6 @@ logs
 
 api-gipsum.docker-key.pem
 api-gipsum.docker.pem
+
+backend/config/__pycache__/
+backend/config/__pycache__/

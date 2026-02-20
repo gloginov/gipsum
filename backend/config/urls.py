@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -11,6 +12,12 @@ urlpatterns = [
     path('api/settings/', include('site_settings.urls')),
     path('api/galleries/', include('galleries.urls')),
     path('api/feedback/', include('feedback.urls')),
+
+    path('auth/csrf/', views.get_csrf, name='csrf'),
+    path('auth/login/', views.login_view, name='login'),
+    path('auth/register/', views.register_view, name='register'),
+    path('auth/logout/', views.logout_view, name='logout'),
+    path('auth/me/', views.me_view, name='me'),
 ]
 
 if settings.DEBUG:

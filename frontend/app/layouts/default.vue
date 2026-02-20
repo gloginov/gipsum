@@ -1,5 +1,8 @@
-<script setup>
+<script setup lang="ts">
+const { user, isAuthenticated, fetchUser, logout } = useAuth()
+
 const config = useRuntimeConfig()
+const showAuthModal = ref(false)
 const { data } = await useFetch('api/settings/?keys=footer_copyright', {
   // key: 'unique-key-' + Date.now(), // уникальный ключ каждый раз
   baseURL: import.meta.server
@@ -7,6 +10,15 @@ const { data } = await useFetch('api/settings/?keys=footer_copyright', {
     : config.public.apiBase
   // getCachedData: false // не использовать кешированные данные
 })
+
+// Загрузить пользователя при старте
+onMounted(() => {
+  fetchUser()
+})
+
+const onAuthSuccess = (userData: any) => {
+  user.value = userData
+}
 </script>
 
 <template>
@@ -27,6 +39,27 @@ const { data } = await useFetch('api/settings/?keys=footer_copyright', {
         <NavigationMenu />
 
         <UColorModeButton />
+
+        <UButton
+          v-if="!isAuthenticated"
+          color="gray"
+          variant="ghost"
+          icon="i-heroicons-user"
+          @click="showAuthModal = true"
+        >
+          Войти
+        </UButton>
+        <UDropdown
+          v-else
+          :items="userMenuItems"
+        >
+          <UButton
+            color="gray"
+            variant="ghost"
+          >
+            {{ user?.first_name || user?.email }}
+          </UButton>
+        </UDropdown>
 
         <!-- <UButton
           to="https://github.com/nuxt-ui-templates/starter"
@@ -61,5 +94,10 @@ const { data } = await useFetch('api/settings/?keys=footer_copyright', {
         /> -->
       </template>
     </UFooter>
+
+    <AuthModal
+      v-model="showAuthModal"
+      @success="onAuthSuccess"
+    />
   </UApp>
 </template>

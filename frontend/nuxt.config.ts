@@ -5,9 +5,15 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@nuxt/ui',
     '@nuxt/fonts',
-    '@nuxt/image'
+    '@nuxt/image',
     // '@nuxt/google-fonts',
+    '@pinia/nuxt',
+    'nuxt-jsonld',
   ],
+
+  pinia: {
+    storesDirs: ['./stores/**'],
+  },
 
   ui: {
     primary: 'FFC847', // меняет var(--ui-primary)
