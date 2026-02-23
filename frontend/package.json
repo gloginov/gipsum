@@ -23,6 +23,7 @@
     "nuxt-jsonld": "^2.2.1",
     "pinia-plugin-persistedstate": "^4.7.1",
     "tailwindcss": "^4.2.0",
+    "vue-yandex-maps": "^3.0.0-rc.2",
     "yup": "^1.7.1"
   },
   "devDependencies": {

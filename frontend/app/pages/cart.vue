@@ -136,13 +136,12 @@
 </template>
 
 <script setup lang="ts">
-const cart = useCartStore()
 const { removeWithConfirm } = useCart()
 
-// Загружаем корзину
-onMounted(() => {
-  cart.fetchCart()
-})
+const cart = useCartStore()
+
+// Правильная SSR-загрузка с пробросом cookies
+await useAsyncData('cart', () => cart.fetchCart())
 
 async function updateQuantity(productId: number, quantity: number) {
   if (quantity < 1) return

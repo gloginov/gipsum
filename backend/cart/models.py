@@ -71,10 +71,12 @@ class CartItem(models.Model):
 
     @property
     def total(self):
+        if self.price is None:
+            return 0
         return self.price * self.quantity
 
     def save(self, *args, **kwargs):
-        # Сохраняем текущую цену при первом создании
-        if not self.pk and not self.price:
+        # Сохраняем текущую цену при первом создании или если цена не установлена
+        if not self.price and self.product and self.product.price:
             self.price = self.product.price
         super().save(*args, **kwargs)

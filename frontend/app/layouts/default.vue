@@ -19,6 +19,24 @@ onMounted(() => {
 const onAuthSuccess = (userData: any) => {
   user.value = userData
 }
+
+const userMenuItems = [
+  {
+    label: 'Профиль',
+    icon: 'i-lucide-user',
+    to: '/profile'
+  },
+  {
+    label: 'Заказы',
+    icon: 'i-lucide-credit-card',
+    to: '/orders'
+  },
+  {
+    label: 'Корзина',
+    icon: 'i-lucide-shopping-cart',
+    to: '/cart'
+  }
+]
 </script>
 
 <template>
@@ -49,7 +67,7 @@ const onAuthSuccess = (userData: any) => {
         >
           Войти
         </UButton>
-        <UDropdown
+        <UDropdownMenu
           v-else
           :items="userMenuItems"
         >
@@ -59,7 +77,7 @@ const onAuthSuccess = (userData: any) => {
           >
             {{ user?.first_name || user?.email }}
           </UButton>
-        </UDropdown>
+        </UDropdownMenu>
 
         <!-- <UButton
           to="https://github.com/nuxt-ui-templates/starter"

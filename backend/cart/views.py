@@ -1,13 +1,23 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated  # Добавьте IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from products.models import Product
 from .cart import CartService
 from .serializers import CartAddSerializer, CartUpdateSerializer, CartRemoveSerializer
 
-class CartDetailView(APIView):
+
+class CsrfExemptAPIView(APIView):
+    """Базовый класс для APIView без CSRF защиты"""
+    def dispatch(self, request, *args, **kwargs):
+        # Отключаем CSRF проверку для этого view
+        request._dont_enforce_csrf_checks = True
+        return super().dispatch(request, *args, **kwargs)
+
+class CartDetailView(CsrfExemptAPIView):
     """Просмотр корзины - доступно всем"""
     permission_classes = [AllowAny]
     
@@ -21,7 +31,7 @@ class CartDetailView(APIView):
         })
 
 
-class CartAddView(APIView):
+class CartAddView(CsrfExemptAPIView):
     """Добавление в корзину - доступно всем"""
     permission_classes = [AllowAny]
     
@@ -64,7 +74,7 @@ class CartAddView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CartUpdateView(APIView):
+class CartUpdateView(CsrfExemptAPIView):
     """Обновление количества - доступно всем"""
     permission_classes = [AllowAny]
     
@@ -96,7 +106,7 @@ class CartUpdateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CartRemoveView(APIView):
+class CartRemoveView(CsrfExemptAPIView):
     """Удаление из корзины - доступно всем"""
     permission_classes = [AllowAny]
     
@@ -118,7 +128,7 @@ class CartRemoveView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CartClearView(APIView):
+class CartClearView(CsrfExemptAPIView):
     """Очистка корзины - доступно всем"""
     permission_classes = [AllowAny]
     

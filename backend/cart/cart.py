@@ -33,7 +33,7 @@ class CartService:
         cart_item, created = CartItem.objects.get_or_create(
             cart=self._cart_db,
             product=product,
-            defaults={'price': product.price, 'quantity': quantity}
+            defaults={'price': product.price or 0, 'quantity': quantity}
         )
         
         if not created:
@@ -94,7 +94,8 @@ class CartService:
 
     def get_total(self):
         """Общая сумма корзины"""
-        return str(self._cart_db.total)
+        total = self._cart_db.total
+        return str(total) if total is not None else '0.00'
 
     def get_count(self):
         """Количество товаров в корзине"""
@@ -122,7 +123,7 @@ class CartService:
                     cart=user_cart,
                     product=item.product,
                     quantity=item.quantity,
-                    price=item.price
+                    price=item.price or 0
                 )
         
         # Удаляем старую сессионную корзину

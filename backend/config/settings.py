@@ -153,11 +153,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     'PAGE_SIZE': 20,
 # }
 
-# # CORS
-# CORS_ALLOW_ALL_ORIGINS = False
-# cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000')
-# CORS_ALLOWED_ORIGINS = cors_origins.split(',') if cors_origins else ['http://localhost:3000']
-
 # Cart session
 CART_SESSION_ID = 'cart'
 

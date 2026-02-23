@@ -9,7 +9,12 @@ export default defineNuxtConfig({
     // '@nuxt/google-fonts',
     '@pinia/nuxt',
     'nuxt-jsonld',
+    'vue-yandex-maps/nuxt',
   ],
+
+  yandexMaps: {
+    apikey: process.env.NUXT_PUBLIC_YANDEX_MAPS_API_KEY,
+  },
 
   pinia: {
     storesDirs: ['./stores/**'],
@@ -34,8 +39,13 @@ export default defineNuxtConfig({
   // },
   runtimeConfig: {
     apiUrl: 'http://server-gipsum:5000/',
+    // Server-only (not exposed to browser)
+    cdekClientId: process.env.NUXT_PUBLIC_CDEK_CLIENT_ID,
+    cdekClientSecret: process.env.NUXT_PUBLIC_CDEK_CLIENT_SECRET,
+
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE
+      apiBase: process.env.NUXT_PUBLIC_API_BASE,
+      yandexMapsApiKey: process.env.NUXT_PUBLIC_YANDEX_MAPS_API_KEY,
     }
   },
 

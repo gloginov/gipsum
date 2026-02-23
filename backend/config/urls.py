@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -18,6 +19,7 @@ urlpatterns = [
     path('auth/register/', views.register_view, name='register'),
     path('auth/logout/', views.logout_view, name='logout'),
     path('auth/me/', views.me_view, name='me'),
+    # path('api/orders/', csrf_exempt(include('orders.urls'))),
 ]
 
 if settings.DEBUG:
